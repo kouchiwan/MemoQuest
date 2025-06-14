@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoQuest - Piano Memory Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-navy': '#1e1e2f',
+                        'gold': '#c9b16d'
+                    },
+                    fontFamily: {
+                        'playfair': ['"Playfair Display"', 'serif'],
+                        'roboto': ['Roboto', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .piano-key {
+            position: relative;
+            height: 240px;
+            border: 1px solid #333;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .white-key {
+            background-color: white;
+            width: 60px;
+        }
+        
+        .white-key:active, .white-key.active {
+            background-color: #e0e0e0;
+        }
+        
+        .black-key {
+            background-color: black;
+            width: 40px;
+            height: 150px;
+            position: absolute;
+            top: 0;
+            z-index: 10;
+            transform: translateX(-20px);
+        }
+        
+        .black-key:active, .black-key.active {
+            background-color: #333;
+        }
+        
+        .key-letter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .black-key .key-letter {
+            color: white;
+            bottom: 15px;
+        }
+        
+        .staff-container {
+            position: relative;
+            height: 120px;
+        }
+        
+        .staff-lines {
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: absolute;
+            width: 100%;
+            top: 20px;
+        }
+        
+        .staff-line {
+            height: 1px;
+            background-color: #888;
+        }
+        
+        .note {
+            position: absolute;
+            width: 24px;
+            height: 16px;
+            background-color: black;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+        }
+        
+        .note-stem {
+            position: absolute;
+            width: 2px;
+            height: 40px;
+            background-color: black;
+            left: 20px;
+            bottom: 8px;
+        }
+        
+        .ledger-line {
+            position: absolute;
+            height: 1px;
+            width: 30px;
+            background-color: #888;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .note-container {
+            position: absolute;
+            transition: left 0.3s ease;
+        }
+        
+        .clear-btn {
+            background-color: #c9b16d;
+            color: #1e1e2f;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .clear-btn:hover {
+            background-color: #b8a25c;
+        }
+        
+        .keyboard-hint {
+            color: #c9b16d;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body class="bg-dark-navy min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Logo -->
+        <div class="mb-8">
+            <h1 class="text-gold font-playfair text-5xl font-bold">
+                <span class="text-gold">Memo</span><br>
+                <span class="text-gold">Quest</span>
+            </h1>
+            <div class="text-gold text-sm font-playfair absolute top-4 left-32">記憶之旅</div>
+        </div>
+        
+        <!-- Staff Lines -->
+        <div class="mx-auto w-full max-w-4xl bg-white p-4 mb-4">
+            <div id="staff-container" class="staff-container">
+                <div class="staff-lines">
+                    <div class="staff-line"></div>
+                    <div class="staff-line"></div>
+                    <div class="staff-line"></div>
+                    <div class="staff-line"></div>
+                    <div class="staff-line"></div>
+                </div>
+                <!-- Notes will be added here dynamically -->
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="mx-auto w-full max-w-4xl flex justify-between items-center mb-4">
+            <div class="keyboard-hint">按下鍵盤上的 A-V 鍵來彈奏音符 (最多顯示5個)</div>
+            <button id="clear-btn" class="clear-btn">清除音符</button>
+        </div>
+        
+        <!-- Piano Keyboard -->
+        <div class="mx-auto w-full max-w-4xl bg-black p-4 relative">
+            <div class="flex justify-center relative">
+                <!-- White Keys -->
+                <div class="piano-key white-key" data-note="C4" data-letter="A" data-frequency="261.63">
+                    <span class="key-letter">A</span>
+                </div>
+                <div class="piano-key white-key" data-note="D4" data-letter="C" data-frequency="293.66">
+                    <span class="key-letter">C</span>
+                </div>
+                <div class="piano-key white-key" data-note="E4" data-letter="E" data-frequency="329.63">
+                    <span class="key-letter">E</span>
+                </div>
+                <div class="piano-key white-key" data-note="F4" data-letter="F" data-frequency="349.23">
+                    <span class="key-letter">F</span>
+                </div>
+                <div class="piano-key white-key" data-note="G4" data-letter="H" data-frequency="392.00">
+                    <span class="key-letter">H</span>
+                </div>
+                <div class="piano-key white-key" data-note="A4" data-letter="J" data-frequency="440.00">
+                    <span class="key-letter">J</span>
+                </div>
+                <div class="piano-key white-key" data-note="B4" data-letter="K" data-frequency="493.88">
+                    <span class="key-letter">K</span>
+                </div>
+                <div class="piano-key white-key" data-note="C5" data-letter="M" data-frequency="523.25">
+                    <span class="key-letter">M</span>
+                </div>
+                <div class="piano-key white-key" data-note="D5" data-letter="O" data-frequency="587.33">
+                    <span class="key-letter">O</span>
+                </div>
+                <div class="piano-key white-key" data-note="E5" data-letter="Q" data-frequency="659.25">
+                    <span class="key-letter">Q</span>
+                </div>
+                <div class="piano-key white-key" data-note="F5" data-letter="R" data-frequency="698.46">
+                    <span class="key-letter">R</span>
+                </div>
+                <div class="piano-key white-key" data-note="G5" data-letter="T" data-frequency="783.99">
+                    <span class="key-letter">T</span>
+                </div>
+                <div class="piano-key white-key" data-note="A5" data-letter="V" data-frequency="880.00">
+                    <span class="key-letter">V</span>
+                </div>
+                
+                <!-- Black Keys -->
+                <div class="black-key" data-note="C#4" data-letter="B" data-frequency="277.18" style="left: calc(50% - 330px + 30px)">
+                    <span class="key-letter">B</span>
+                </div>
+                <div class="black-key" data-note="D#4" data-letter="D" data-frequency="311.13" style="left: calc(50% - 330px + 90px)">
+                    <span class="key-letter">D</span>
+                </div>
+                <div class="black-key" data-note="F#4" data-letter="G" data-frequency="369.99" style="left: calc(50% - 330px + 210px)">
+                    <span class="key-letter">G</span>
+                </div>
+                <div class="black-key" data-note="G#4" data-letter="I" data-frequency="415.30" style="left: calc(50% - 330px + 270px)">
+                    <span class="key-letter">I</span>
+                </div>
+                <div class="black-key" data-note="A#4" data-letter="L" data-frequency="466.16" style="left: calc(50% - 330px + 390px)">
+                    <span class="key-letter">L</span>
+                </div>
+                <div class="black-key" data-note="C#5" data-letter="N" data-frequency="554.37" style="left: calc(50% - 330px + 450px)">
+                    <span class="key-letter">N</span>
+                </div>
+                <div class="black-key" data-note="D#5" data-letter="P" data-frequency="622.25" style="left: calc(50% - 330px + 510px)">
+                    <span class="key-letter">P</span>
+                </div>
+                <div class="black-key" data-note="F#5" data-letter="S" data-frequency="739.99" style="left: calc(50% - 330px + 630px)">
+                    <span class="key-letter">S</span>
+                </div>
+                <div class="black-key" data-note="G#5" data-letter="U" data-frequency="830.61" style="left: calc(50% - 330px + 690px)">
+                    <span class="key-letter">U</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const staffContainer = document.getElementById('staff-container');
+            const pianoKeys = document.querySelectorAll('.piano-key');
+            const clearBtn = document.getElementById('clear-btn');
+            
+            // Audio context for sound generation
+            let audioContext;
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('Web Audio API is not supported in this browser');
+            }
+            
+            // Note positions on the staff (relative to the top of the staff container)
+            const notePositions = {
+                'C4': 100, 'C#4': 100,
+                'D4': 95, 'D#4': 95,
+                'E4': 90,
+                'F4': 85, 'F#4': 85,
+                'G4': 80, 'G#4': 80,
+                'A4': 75, 'A#4': 75,
+                'B4': 70,
+                'C5': 65, 'C#5': 65,
+                'D5': 60, 'D#5': 60,
+                'E5': 55,
+                'F5': 50, 'F#5': 50,
+                'G5': 45, 'G#5': 45,
+                'A5': 40, 'A#5': 40
+            };
+            
+            // Direct mapping of keyboard keys to piano keys
+            const keyboardMap = {
+                'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E', 
+                'f': 'F', 'g': 'G', 'h': 'H', 'i': 'I', 'j': 'J',
+                'k': 'K', 'l': 'L', 'm': 'M', 'n': 'N', 'o': 'O',
+                'p': 'P', 'q': 'Q', 'r': 'R', 's': 'S', 't': 'T',
+                'u': 'U', 'v': 'V'
+            };
+            
+            // Array to store the sequence of notes (max 5)
+            let noteSequence = [];
+            
+            // Keep track of currently pressed keys to prevent repeating
+            let pressedKeys = {};
+            
+            // Function to play a note sound
+            function playNote(frequency) {
+                if (!audioContext) return;
+                
+                // Create oscillator
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = frequency;
+                
+                // Connect nodes
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Set envelope
+                const now = audioContext.currentTime;
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1);
+                
+                // Start and stop
+                oscillator.start(now);
+                oscillator.stop(now + 1);
+            }
+            
+            // Function to display a note on the staff
+            function displayNote(noteName, frequency) {
+                // Add to sequence (max 5 notes)
+                if (noteSequence.length >= 5) {
+                    // Remove the first note
+                    noteSequence.shift();
+                }
+                
+                // Add new note to sequence
+                noteSequence.push({ name: noteName, position: notePositions[noteName] });
+                
+                // Clear staff
+                const existingNotes = staffContainer.querySelectorAll('.note-container');
+                existingNotes.forEach(note => note.remove());
+                
+                // Display all notes in sequence
+                noteSequence.forEach((note, index) => {
+                    const noteContainer = document.createElement('div');
+                    noteContainer.className = 'note-container';
+                    noteContainer.style.left = `${20 + (index * 15)}%`;
+                    noteContainer.style.top = note.position + 'px';
+                    
+                    const noteElement = document.createElement('div');
+                    noteElement.className = 'note';
+                    
+                    const stem = document.createElement('div');
+                    stem.className = 'note-stem';
+                    
+                    // Add ledger lines if needed
+                    if (note.position > 100 || note.position < 40) {
+                        const ledgerLine = document.createElement('div');
+                        ledgerLine.className = 'ledger-line';
+                        ledgerLine.style.top = '8px';
+                        noteContainer.appendChild(ledgerLine);
+                    }
+                    
+                    noteContainer.appendChild(noteElement);
+                    noteContainer.appendChild(stem);
+                    staffContainer.appendChild(noteContainer);
+                });
+                
+                // Play the sound
+                playNote(frequency);
+            }
+            
+            // Add click event listeners to piano keys
+            pianoKeys.forEach(key => {
+                key.addEventListener('mousedown', function() {
+                    const noteName = this.getAttribute('data-note');
+                    const frequency = parseFloat(this.getAttribute('data-frequency'));
+                    displayNote(noteName, frequency);
+                    
+                    // Add active class for visual feedback
+                    this.classList.add('active');
+                });
+                
+                key.addEventListener('mouseup', function() {
+                    this.classList.remove('active');
+                });
+                
+                key.addEventListener('mouseleave', function() {
+                    this.classList.remove('active');
+                });
+            });
+            
+            // Add keyboard event listeners
+            document.addEventListener('keydown', function(event) {
+                const key = event.key.toLowerCase();
+                
+                // Only process A-V keys and prevent repeating when key is held down
+                if (keyboardMap[key] && !pressedKeys[key]) {
+                    pressedKeys[key] = true;
+                    
+                    const pianoKey = document.querySelector(`.piano-key[data-letter="${keyboardMap[key]}"]`);
+                    if (pianoKey) {
+                        const noteName = pianoKey.getAttribute('data-note');
+                        const frequency = parseFloat(pianoKey.getAttribute('data-frequency'));
+                        displayNote(noteName, frequency);
+                        
+                        // Add active class for visual feedback
+                        pianoKey.classList.add('active');
+                    }
+                }
+            });
+            
+            document.addEventListener('keyup', function(event) {
+                const key = event.key.toLowerCase();
+                
+                if (keyboardMap[key]) {
+                    // Remove from pressed keys
+                    delete pressedKeys[key];
+                    
+                    const pianoKey = document.querySelector(`.piano-key[data-letter="${keyboardMap[key]}"]`);
+                    if (pianoKey) {
+                        pianoKey.classList.remove('active');
+                    }
+                }
+            });
+            
+            // Clear button functionality
+            clearBtn.addEventListener('click', function() {
+                noteSequence = [];
+                const existingNotes = staffContainer.querySelectorAll('.note-container');
+                existingNotes.forEach(note => note.remove());
+            });
+            
+            // Initialize audio context on first user interaction
+            document.addEventListener('click', function initAudio() {
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                document.removeEventListener('click', initAudio);
+            }, { once: true });
+            
+            // Add window blur event to reset pressed keys
+            window.addEventListener('blur', function() {
+                pressedKeys = {};
+                document.querySelectorAll('.piano-key.active').forEach(key => {
+                    key.classList.remove('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
