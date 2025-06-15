@@ -5,12 +5,13 @@
     <title>MemoQuest 尋憶之旅</title>
     <style>
         body {
-            margin: 0;
             background-color: #000;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
+            flex-direction: column;
         }
 
         img {
@@ -20,32 +21,28 @@
     </style>
 </head>
 <body>
+    <!-- 顯示圖片 -->
     <img src="IMG_4112.png" alt="MemoQuest Logo">
 
+    <!-- 播放 mp3 音訊 -->
+    <audio id="do-audio" autoplay>
+        <source src="Do.mp3" type="audio/mpeg">
+        您的瀏覽器不支援 audio 標籤。
+    </audio>
+
     <script>
+        // 為避免部分瀏覽器阻擋自動播放，可加一層保險：
         window.addEventListener('click', () => {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const audioCtx = new AudioContext();
-
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-
-            oscillator.type = 'sine';
-            oscillator.frequency.value = 261.63; // Do (C4)
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
-
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 1.5);
+            const audio = document.getElementById('do-audio');
+            if (audio.paused) {
+                audio.play();
+            }
         });
     </script>
 
-    <div style="position: absolute; bottom: 20px; color: white; font-family: sans-serif;">
-        點擊任意處播放「Do」
+    <div style="color: white; font-family: sans-serif; margin-top: 20px;">
+        如果未自動播放，請點擊畫面
     </div>
 </body>
 </html>
+
