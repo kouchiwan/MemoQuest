@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>MemoQuest 尋憶之旅</title>
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        img {
+            max-width: 90%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顯示圖片 -->
+    <img src="IMG_4112.png" alt="MemoQuest Logo">
+
+    <!-- 播放 mp3 音訊 -->
+    <audio id="do-audio" autoplay>
+        <source src="FA.mp3" type="audio/mpeg">
+        您的瀏覽器不支援 audio 標籤。
+    </audio>
+
+    <script>
+        // 為避免部分瀏覽器阻擋自動播放，可加一層保險：
+        window.addEventListener('click', () => {
+            const audio = document.getElementById('do-audio');
+            if (audio.paused) {
+                audio.play();
+            }
+        });
+    </script>
+
+    <div style="color: white; font-family: sans-serif; margin-top: 20px;">
+        如果未自動播放，請點擊畫面
+    </div>
+</body>
+</html>
