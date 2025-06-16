@@ -377,7 +377,15 @@
                     // Add active class for visual feedback
                     this.classList.add('active');
                 });
-                
+                // 比對音階順序（滿足條件後跳轉）
+                const target = ['C4', 'E4', 'C4', 'C5', 'D5', 'F5'];
+                if (noteSequence.length === target.length &&
+                    noteSequence.every((n, i) => n.name === target[i])) {
+                    setTimeout(() => {
+                        window.location.href = "final.html";
+                    }, 300);
+                }
+
                 key.addEventListener('mouseup', function() {
                     this.classList.remove('active');
                 });
