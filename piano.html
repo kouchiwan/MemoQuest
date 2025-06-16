@@ -251,220 +251,163 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const staffContainer = document.getElementById('staff-container');
-            const pianoKeys = document.querySelectorAll('.piano-key');
-            const clearBtn = document.getElementById('clear-btn');
-            
-            // Audio context for sound generation
-            let audioContext;
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            } catch (e) {
-                console.warn('Web Audio API is not supported in this browser');
-            }
-            
-            // Note positions on the staff (relative to the top of the staff container)
-            const notePositions = {
-                'C4': 100, 'C#4': 100,
-                'D4': 95, 'D#4': 95,
-                'E4': 90,
-                'F4': 85, 'F#4': 85,
-                'G4': 80, 'G#4': 80,
-                'A4': 75, 'A#4': 75,
-                'B4': 70,
-                'C5': 65, 'C#5': 65,
-                'D5': 60, 'D#5': 60,
-                'E5': 55,
-                'F5': 50, 'F#5': 50,
-                'G5': 45, 'G#5': 45,
-                'A5': 40, 'A#5': 40
-            };
-            
-            // Direct mapping of keyboard keys to piano keys
-            const keyboardMap = {
-                'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E', 
-                'f': 'F', 'g': 'G', 'h': 'H', 'i': 'I', 'j': 'J',
-                'k': 'K', 'l': 'L', 'm': 'M', 'n': 'N', 'o': 'O',
-                'p': 'P', 'q': 'Q', 'r': 'R', 's': 'S', 't': 'T',
-                'u': 'U', 'v': 'V'
-            };
-            
-            // Array to store the sequence of notes (max 5)
-            let noteSequence = [];
-            
-            // Keep track of currently pressed keys to prevent repeating
-            let pressedKeys = {};
-            
-            // Function to play a note sound
-            function playNote(frequency) {
-                if (!audioContext) return;
-                
-                // Create oscillator
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.value = frequency;
-                
-                // Connect nodes
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                // Set envelope
-                const now = audioContext.currentTime;
-                gainNode.gain.setValueAtTime(0, now);
-                gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1);
-                
-                // Start and stop
-                oscillator.start(now);
-                oscillator.stop(now + 1);
-            }
-            
-            // Function to display a note on the staff
-            function displayNote(noteName, frequency) {
-                // Add to sequence (max 5 notes)
-                if (noteSequence.length >= 5) {
-                    // Remove the first note
-                    noteSequence.shift();
-                }
-                
-                // Add new note to sequence
-                noteSequence.push({ name: noteName, position: notePositions[noteName] });
-                
-                // Clear staff
-                const existingNotes = staffContainer.querySelectorAll('.note-container');
-                existingNotes.forEach(note => note.remove());
-                
-                // Display all notes in sequence
-                noteSequence.forEach((note, index) => {
-                    const noteContainer = document.createElement('div');
-                    noteContainer.className = 'note-container';
-                    noteContainer.style.left = `${20 + (index * 15)}%`;
-                    noteContainer.style.top = note.position + 'px';
-                    
-                    const noteElement = document.createElement('div');
-                    noteElement.className = 'note';
-                    
-                    const stem = document.createElement('div');
-                    stem.className = 'note-stem';
-                    
-                    // Add ledger lines if needed
-                    if (note.position > 100 || note.position < 40) {
-                        const ledgerLine = document.createElement('div');
-                        ledgerLine.className = 'ledger-line';
-                        ledgerLine.style.top = '8px';
-                        noteContainer.appendChild(ledgerLine);
-                    }
-                    
-                    noteContainer.appendChild(noteElement);
-                    noteContainer.appendChild(stem);
-                    staffContainer.appendChild(noteContainer);
-                });
-                
-                // Play the sound
-                playNote(frequency);
-            }
+      document.addEventListener('DOMContentLoaded', function() {
+        const staffContainer = document.getElementById('staff-container');
+        const pianoKeys = document.querySelectorAll('.piano-key');
+        const clearBtn = document.getElementById('clear-btn');
 
+        let audioContext;
+        try {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+          console.warn('Web Audio API is not supported');
+        }
 
-            // Add click event listeners to piano keys
-            pianoKeys.forEach(key => {
-                key.addEventListener('mousedown', function() {
-                    const noteName = this.getAttribute('data-note');
-                    const frequency = parseFloat(this.getAttribute('data-frequency'));
-                    displayNote(noteName, frequency);
-                    
-                    // Add active class for visual feedback
-                    this.classList.add('active');
-                });
-
-                key.addEventListener('mouseup', function() {
-                    this.classList.remove('active');
-                });
-                
-                key.addEventListener('mouseleave', function() {
-                    this.classList.remove('active');
-                });
-            });
-            
-            // Add keyboard event listeners
-            document.addEventListener('keydown', function(event) {
-                const key = event.key.toLowerCase();
-                
-                // Only process A-V keys and prevent repeating when key is held down
-                if (keyboardMap[key] && !pressedKeys[key]) {
-                    pressedKeys[key] = true;
-                    
-                    const pianoKey = document.querySelector(`.piano-key[data-letter="${keyboardMap[key]}"]`);
-                    if (pianoKey) {
-                        const noteName = pianoKey.getAttribute('data-note');
-                        const frequency = parseFloat(pianoKey.getAttribute('data-frequency'));
-                        displayNote(noteName, frequency);
-                        
-                        // Add active class for visual feedback
-                        pianoKey.classList.add('active');
-                    }
-                }
-            });
-            
-            document.addEventListener('keyup', function(event) {
-                const key = event.key.toLowerCase();
-                
-                if (keyboardMap[key]) {
-                    // Remove from pressed keys
-                    delete pressedKeys[key];
-                    
-                    const pianoKey = document.querySelector(`.piano-key[data-letter="${keyboardMap[key]}"]`);
-                    if (pianoKey) {
-                        pianoKey.classList.remove('active');
-                    }
-                }
-            });
-            
-            // Clear button functionality
-            clearBtn.addEventListener('click', function() {
-                noteSequence = [];
-                const existingNotes = staffContainer.querySelectorAll('.note-container');
-                existingNotes.forEach(note => note.remove());
-            });
-            
-            // Initialize audio context on first user interaction
-            document.addEventListener('click', function initAudio() {
-                if (audioContext && audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-                document.removeEventListener('click', initAudio);
-            }, { once: true });
-            
-            // Add window blur event to reset pressed keys
-            window.addEventListener('blur', function() {
-                pressedKeys = {};
-                document.querySelectorAll('.piano-key.active').forEach(key => {
-                    key.classList.remove('active');
-                });
-            });
-        });
-const targetSequence = ['A', 'E', 'A', 'M', 'C'];
-
-function checkSequence() {
-    const current = noteSequence.map(n => n.name);
-    const simple = current.map(n => {
-        // 將音名轉換為對應的按鍵字母
-        const keyMap = {
-            'C4': 'A', 'D4': 'C', 'E4': 'E', 'F4': 'F',
-            'G4': 'H', 'A4': 'J', 'B4': 'K', 'C5': 'M',
-            'D5': 'O', 'E5': 'Q', 'F5': 'R', 'G5': 'T',
-            'A5': 'V'
+        const notePositions = {
+          'C4': 100, 'C#4': 100, 'D4': 95, 'D#4': 95, 'E4': 90,
+          'F4': 85, 'F#4': 85, 'G4': 80, 'G#4': 80, 'A4': 75,
+          'A#4': 75, 'B4': 70, 'C5': 65, 'C#5': 65, 'D5': 60,
+          'D#5': 60, 'E5': 55, 'F5': 50, 'F#5': 50, 'G5': 45,
+          'G#5': 45, 'A5': 40, 'A#5': 40
         };
-        return keyMap[n] || '';
-    });
 
-    if (simple.join(',') === targetSequence.join(',')) {
-        window.location.href = "final.html"; // ✅ 播放結尾動畫頁
-    }
-}
+        const keyboardMap = {
+          'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E',
+          'f': 'F', 'g': 'G', 'h': 'H', 'i': 'I', 'j': 'J',
+          'k': 'K', 'l': 'L', 'm': 'M', 'n': 'N', 'o': 'O',
+          'p': 'P', 'q': 'Q', 'r': 'R', 's': 'S', 't': 'T',
+          'u': 'U', 'v': 'V'
+        };
 
+        let noteSequence = [];
+        let pressedKeys = {};
+
+        const secretSequence = ['A', 'E', 'A', 'M', 'C'];
+        let inputSequence = [];
+
+        function checkSecretSequence(letter) {
+          inputSequence.push(letter);
+          if (inputSequence.length > secretSequence.length) {
+            inputSequence.shift();
+          }
+          if (inputSequence.join('') === secretSequence.join('')) {
+            window.location.href = 'final.html';
+          }
+        }
+
+        function playNote(frequency) {
+          if (!audioContext) return;
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          oscillator.type = 'sine';
+          oscillator.frequency.value = frequency;
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          const now = audioContext.currentTime;
+          gainNode.gain.setValueAtTime(0, now);
+          gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1);
+          oscillator.start(now);
+          oscillator.stop(now + 1);
+        }
+
+        function displayNote(noteName, frequency, letter) {
+          checkSecretSequence(letter);
+          if (noteSequence.length >= 5) {
+            noteSequence.shift();
+          }
+          noteSequence.push({ name: noteName, position: notePositions[noteName] });
+          staffContainer.querySelectorAll('.note-container').forEach(note => note.remove());
+          noteSequence.forEach((note, index) => {
+            const noteContainer = document.createElement('div');
+            noteContainer.className = 'note-container';
+            noteContainer.style.left = `${20 + (index * 15)}%`;
+            noteContainer.style.top = note.position + 'px';
+
+            const noteElement = document.createElement('div');
+            noteElement.className = 'note';
+
+            const stem = document.createElement('div');
+            stem.className = 'note-stem';
+
+            if (note.position > 100 || note.position < 40) {
+              const ledgerLine = document.createElement('div');
+              ledgerLine.className = 'ledger-line';
+              ledgerLine.style.top = '8px';
+              noteContainer.appendChild(ledgerLine);
+            }
+
+            noteContainer.appendChild(noteElement);
+            noteContainer.appendChild(stem);
+            staffContainer.appendChild(noteContainer);
+          });
+
+          playNote(frequency);
+        }
+
+        pianoKeys.forEach(key => {
+          key.addEventListener('mousedown', function () {
+            const noteName = this.getAttribute('data-note');
+            const frequency = parseFloat(this.getAttribute('data-frequency'));
+            const letter = this.getAttribute('data-letter');
+            displayNote(noteName, frequency, letter);
+            this.classList.add('active');
+          });
+
+          key.addEventListener('mouseup', function () {
+            this.classList.remove('active');
+          });
+
+          key.addEventListener('mouseleave', function () {
+            this.classList.remove('active');
+          });
+        });
+
+        document.addEventListener('keydown', function (event) {
+          const key = event.key.toLowerCase();
+          if (keyboardMap[key] && !pressedKeys[key]) {
+            pressedKeys[key] = true;
+            const pianoKey = document.querySelector(`.piano-key[data-letter="${keyboardMap[key]}"]`);
+            if (pianoKey) {
+              const noteName = pianoKey.getAttribute('data-note');
+              const frequency = parseFloat(pianoKey.getAttribute('data-frequency'));
+              const letter = keyboardMap[key];
+              displayNote(noteName, frequency, letter);
+              pianoKey.classList.add('active');
+            }
+          }
+        });
+
+        document.addEventListener('keyup', function (event) {
+          const key = event.key.toLowerCase();
+          if (keyboardMap[key]) {
+            delete pressedKeys[key];
+            const pianoKey = document.querySelector(`.piano-key[data-letter="${keyboardMap[key]}"]`);
+            if (pianoKey) {
+              pianoKey.classList.remove('active');
+            }
+          }
+        });
+
+        clearBtn.addEventListener('click', function () {
+          noteSequence = [];
+          staffContainer.querySelectorAll('.note-container').forEach(note => note.remove());
+        });
+
+        document.addEventListener('click', function initAudio() {
+          if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+          }
+          document.removeEventListener('click', initAudio);
+        }, { once: true });
+
+        window.addEventListener('blur', function () {
+          pressedKeys = {};
+          document.querySelectorAll('.piano-key.active').forEach(key => key.classList.remove('active'));
+        });
+      });
     </script>
+  </div>
 </body>
 </html>
