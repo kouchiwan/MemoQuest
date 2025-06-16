@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MemoQuest 鋼琴</title>
+  <style>
+    body {
+      background-color: #1e1e2f;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    .staff {
+      position: relative;
+      height: 100px;
+      margin-bottom: 30px;
+    }
+    .staff-line {
+      position: absolute;
+      width: 100%;
+      height: 1px;
+      background: white;
+    }
+    .staff-line:nth-child(1) { top: 0; }
+    .staff-line:nth-child(2) { top: 25px; }
+    .staff-line:nth-child(3) { top: 50px; }
+    .staff-line:nth-child(4) { top: 75px; }
+    .staff-line:nth-child(5) { top: 100px; }
+    .note {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: yellow;
+      border-radius: 50%;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>MemoQuest 鋼琴</h1>
+  <div class="staff" id="staff">
+    <div class="staff-line"></div>
+    <div class="staff-line"></div>
+    <div class="staff-line"></div>
+    <div class="staff-line"></div>
+    <div class="staff-line"></div>
+  </div>
+  <div class="controls">
+    <button onclick="clearNotes()">清除</button>
+  </div>
+
+  <audio id="noteAudio"></audio>
+
+  <script>
+    const staff = document.getElementById("staff");
+    const audio = document.getElementById("noteAudio");
+
+    const noteMap = {
+      "DO": { top: 80, sound: "C4" },
+      "RE": { top: 70, sound: "D4" },
+      "MI": { top: 60, sound: "E4" },
+      "FA": { top: 50, sound: "F4" },
+      "SO": { top: 40, sound: "G4" },
+      "LA": { top: 30, sound: "A4" },
+      "TI": { top: 20, sound: "B4" },
+    };
+
+    function playNote(note) {
+      const noteData = noteMap[note];
+      if (!noteData) return;
+
+      const noteEl = document.createElement("div");
+      noteEl.className = "note";
+      noteEl.style.top = noteData.top + "px";
+      noteEl.style.left = 10 + Math.random() * 80 + "%";
+      staff.appendChild(noteEl);
+
+      // 播放音頻
+      audio.src = `notes/${noteData.sound}.mp3`;
+      audio.play();
+    }
+
+    function clearNotes() {
+      staff.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const line = document.createElement("div");
+        line.className = "staff-line";
+        staff.appendChild(line);
+      }
+    }
+
+    // WebSocket 接收
+    const socket = new WebSocket("ws://" + location.hostname + ":81");
+
+    socket.onmessage = function(event) {
+      playNote(event.data.trim());
+    };
+  </script>
+</body>
+</html>
