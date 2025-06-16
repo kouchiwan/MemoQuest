@@ -366,17 +366,7 @@
                 // Play the sound
                 playNote(frequency);
             }
-            // 檢查是否符合特定音序
-            const targetSequence = ["C4", "E4", "C4", "C5", "D5"];
-            const currentSequence = noteSequence.map(n => n.name);
 
-            if (currentSequence.length === 5 && JSON.stringify(currentSequence) === JSON.stringify(targetSequence)) {
-                console.log("✅ 音序正確！");
-    
-                setTimeout(() => {
-                    window.location.href = "final.html";  
-                }, 1000); // 1秒延遲
-            }
 
             // Add click event listeners to piano keys
             pianoKeys.forEach(key => {
@@ -455,6 +445,26 @@
                 });
             });
         });
+const targetSequence = ['A', 'E', 'A', 'M', 'C'];
+
+function checkSequence() {
+    const current = noteSequence.map(n => n.name);
+    const simple = current.map(n => {
+        // 將音名轉換為對應的按鍵字母
+        const keyMap = {
+            'C4': 'A', 'D4': 'C', 'E4': 'E', 'F4': 'F',
+            'G4': 'H', 'A4': 'J', 'B4': 'K', 'C5': 'M',
+            'D5': 'O', 'E5': 'Q', 'F5': 'R', 'G5': 'T',
+            'A5': 'V'
+        };
+        return keyMap[n] || '';
+    });
+
+    if (simple.join(',') === targetSequence.join(',')) {
+        window.location.href = "final.html"; // ✅ 播放結尾動畫頁
+    }
+}
+
     </script>
 </body>
 </html>
