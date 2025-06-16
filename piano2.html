@@ -1,72 +1,114 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <title>WebSocket 鋼琴五線譜</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <title>Memo Quest 鋼琴</title>
   <style>
-    body { background: #fff; font-family: sans-serif; text-align: center; margin: 0; }
-    h1 { background: #000; color: #fff; padding: 10px; }
+    body {
+      margin: 0;
+      font-family: 'Playfair Display', serif;
+      background-color: #1c1c2e;
+      color: #d4af37;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 48px;
+      margin: 0;
+    }
     #staff {
-      margin-top: 20px;
-      position: relative;
+      background: white;
+      width: 90%;
       height: 200px;
-      background: url('https://upload.wikimedia.org/wikipedia/commons/4/4f/Staff_notation_empty.png') no-repeat center;
-      background-size: contain;
+      margin: 40px 0;
+      position: relative;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+    .line {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: #333;
     }
     .note {
+      width: 20px;
+      height: 20px;
+      background: black;
+      border-radius: 50%;
       position: absolute;
-      width: 30px;
-      height: 30px;
-      background: url('https://upload.wikimedia.org/wikipedia/commons/6/60/Music_note_icon.png') no-repeat center;
-      background-size: contain;
-      animation: drop 2s ease-out;
+      transition: all 0.3s ease;
     }
-    @keyframes drop {
-      0% { transform: translateY(-50px); opacity: 0; }
-      100% { transform: translateY(0); opacity: 1; }
+    button {
+      background: #d4af37;
+      border: none;
+      color: black;
+      font-size: 20px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>🎹 鋼琴互動任務</h1>
-  <div id="staff"></div>
+  <h1>Memo<br>Quest</h1>
+  <div id="staff">
+    <!-- 五線譜線條 -->
+    <div class="line" style="top: 30px"></div>
+    <div class="line" style="top: 60px"></div>
+    <div class="line" style="top: 90px"></div>
+    <div class="line" style="top: 120px"></div>
+    <div class="line" style="top: 150px"></div>
+  </div>
+  <button onclick="clearNotes()">清除音符</button>
 
-  <audio id="Do" src="notes/do.mp3"></audio>
-  <audio id="Re" src="notes/re.mp3"></audio>
-  <audio id="Mi" src="notes/mi.mp3"></audio>
-  <audio id="Fa" src="notes/fa.mp3"></audio>
-  <audio id="Sol" src="notes/sol.mp3"></audio>
-  <audio id="La" src="notes/la.mp3"></audio>
-  <audio id="Si" src="notes/si.mp3"></audio>
+  <!-- 音效 -->
+  <audio id="C" src="notes/C.mp3"></audio>
+  <audio id="D" src="notes/D.mp3"></audio>
+  <audio id="E" src="notes/E.mp3"></audio>
+  <audio id="F" src="notes/F.mp3"></audio>
+  <audio id="G" src="notes/G.mp3"></audio>
+  <audio id="A" src="notes/A.mp3"></audio>
+  <audio id="B" src="notes/B.mp3"></audio>
 
   <script>
-    const positions = { Do: 120, Re: 110, Mi: 100, Fa: 90, Sol: 80, La: 70, Si: 60 };
+    // 音符位置對應（五線譜位置）
+    const noteY = {
+      C: 170,
+      D: 155,
+      E: 140,
+      F: 125,
+      G: 110,
+      A: 95,
+      B: 80
+    };
 
-    function playNote(note) {
+    function showNote(note) {
+      const staff = document.getElementById("staff");
+      const dot = document.createElement("div");
+      dot.className = "note";
+      dot.style.left = `${Math.random() * (staff.clientWidth - 20)}px`;
+      dot.style.top = `${noteY[note] || 140}px`;
+      staff.appendChild(dot);
+
       const sound = document.getElementById(note);
       if (sound) sound.play();
-
-      const el = document.createElement("div");
-      el.className = "note";
-      el.style.left = Math.random() * 80 + "%";
-      el.style.top = positions[note] + "px";
-      document.getElementById("staff").appendChild(el);
-      setTimeout(() => el.remove(), 3000);
     }
 
-    // WebSocket 連線
-    const ws = new WebSocket("ws://172.20.10.2/ws");  // 修改成 ESP32 IP
+    function clearNotes() {
+      document.querySelectorAll('.note').forEach(n => n.remove());
+    }
 
-    ws.onopen = () => console.log("✅ WebSocket 已連接");
-    ws.onmessage = e => {
-      const msg = e.data;
-      if (msg.startsWith("note:")) {
-        const note = msg.split(":")[1];
-        playNote(note);
-      }
-    };
-    ws.onerror = e => console.error("WebSocket 錯誤", e);
+    // 讀取 URL note 參數（ESP32 傳來的）
+    const params = new URLSearchParams(location.search);
+    const note = params.get("note");
+    if (note) {
+      showNote(note);
+    }
   </script>
 </body>
 </html>
+
